@@ -2,6 +2,14 @@
 
 [![Documentation Status](https://readthedocs.org/projects/stistools/badge/?version=latest)](https://stistools.readthedocs.io/en/latest/?badge=latest)
 
+## For SDETFP
+
+Run `python -m pytest` to run the tests, this will only run the tests we developed. It includes coverage for the tests we developed in pyproject.toml.
+
+Need to do `pip install -e ".[test, all]"` to install the package in editable mode with all dependencies.
+
+## Original Readme
+
 Tools for HST/STIS.
 
 Code Contribution Guide:

@@ -34,6 +34,7 @@ content-type = "text/markdown"
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-cov",
     "ci-watson>=0.8.0",
     "requests",
 ]
@@ -74,12 +75,21 @@ universal = 1
 
 [tool.pytest.ini_options]
 minversion = "3"
+testpaths = ["tests_sdet"]
 norecursedirs = [
     ".eggs",
     "build",
     "docs/_build",
 ]
 junit_family = "xunit2"
+addopts = "--cov=stistools --cov-branch --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+branch = true
+source = ["stistools"]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.setuptools_scm]
 write_to = "stistools/version.py"
