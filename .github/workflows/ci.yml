@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: Statement & Branch Coverage
+  # ──────────────────────────────────────────────
+  coverage:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[test]"
+
+      - name: Run tests with coverage
+        run: pytest --cov-report=xml:coverage.xml
+
+      # PR: reads coverage.xml produced by pytest-cov and posts a coverage table comment.
+      - name: Coverage comment on PR
+        if: github.event_name == 'pull_request'
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: coverage.xml
+
+      # Push: commits an SVG badge to the `python-coverage-comment-action-data` branch.
+      - name: Update coverage badge
+        if: github.event_name == 'push'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload HTML coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: htmlcov/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # Job 2: Mutation Testing
+  # ──────────────────────────────────────────────
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[test]" mutmut
+
+      - uses: actions/cache@v4
+        with:
+          path: .mutmut-cache
+          key: mutmut-${{ runner.os }}-${{ hashFiles('stistools/**/*.py') }}
+          restore-keys: mutmut-${{ runner.os }}-
+
+      - name: Run mutation testing
+        run: mutmut run || true
+
+      - name: Compute mutation score
+        if: always()
+        id: mutmut
+        run: |
+          mutmut junitxml > mutation-junit.xml 2>/dev/null || true
+          mutmut html || true
+          python - <<'EOF' >> $GITHUB_OUTPUT
+          import xml.etree.ElementTree as ET
+          try:
+              root = ET.parse('mutation-junit.xml').getroot()
+              total = int(root.attrib.get('tests', 0))
+              failures = int(root.attrib.get('failures', 0))
+              score = f'{(total - failures) / total * 100:.1f}' if total else 'N/A'
+          except Exception:
+              score = 'N/A'
+          print(f'score={score}')
+          EOF
+
+      - name: Comment mutation results on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: mutation-report
+          message: |
+            ## Mutation Testing Report
+
+            | Metric | Value |
+            |--------|-------|
+            | **Mutation Score** | ${{ steps.mutmut.outputs.score }}% |
+
+            [Download HTML report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Upload mutation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: |
+            mutation-junit.xml
+            html/
+          retention-days: 30

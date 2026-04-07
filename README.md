@@ -1,6 +1,7 @@
 # stistools
 
 [![Documentation Status](https://readthedocs.org/projects/stistools/badge/?version=latest)](https://stistools.readthedocs.io/en/latest/?badge=latest)
+[![Coverage](https://raw.githubusercontent.com/ye-spencer/stistools-sdetfp/python-coverage-comment-action-data/badge.svg)](https://github.com/ye-spencer/stistools-sdetfp/actions)
 
 ## For SDETFP
 
