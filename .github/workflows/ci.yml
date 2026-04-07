@@ -70,7 +70,7 @@ jobs:
           restore-keys: mutmut-${{ runner.os }}-
 
       - name: Run mutation testing
-        run: mutmut run
+        run: mutmut run --paths-to-mutate stistools/ --tests-dir tests_sdet/ --runner "python -m pytest tests_sdet/ -x --assert=plain --no-cov"
         continue-on-error: true
 
       - name: Compute mutation score

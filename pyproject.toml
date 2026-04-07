@@ -92,10 +92,5 @@ source = ["stistools"]
 [tool.coverage.report]
 show_missing = true
 
-[tool.mutmut]
-paths_to_mutate = "stistools/"
-tests_dir = "tests_sdet/"
-runner = "python -m pytest tests_sdet/ -x --assert=plain --no-cov"
-
 [tool.setuptools_scm]
 write_to = "stistools/version.py"
