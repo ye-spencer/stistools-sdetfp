@@ -77,16 +77,14 @@ jobs:
         if: always()
         id: mutmut
         run: |
-          mutmut junitxml > mutation-junit.xml 2>/dev/null || true
           python - <<'EOF' >> $GITHUB_OUTPUT
-          import xml.etree.ElementTree as ET
-          try:
-              root = ET.parse('mutation-junit.xml').getroot()
-              total = int(root.attrib.get('tests', 0))
-              failures = int(root.attrib.get('failures', 0))
-              score = f'{(total - failures) / total * 100:.1f}' if total else 'N/A'
-          except Exception:
-              score = 'N/A'
+          import subprocess, re
+          result = subprocess.run(['mutmut', 'results'], capture_output=True, text=True)
+          output = result.stdout + result.stderr
+          killed   = len(re.findall(r'(?m)^Killed',   output))
+          survived = len(re.findall(r'(?m)^Survived', output))
+          total = killed + survived
+          score = f'{killed / total * 100:.1f}' if total else 'N/A'
           print(f'score={score}')
           EOF
 
