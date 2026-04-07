@@ -70,7 +70,8 @@ jobs:
           restore-keys: mutmut-${{ runner.os }}-
 
       - name: Run mutation testing
-        run: mutmut run || true
+        run: mutmut run
+        continue-on-error: true
 
       - name: Compute mutation score
         if: always()
