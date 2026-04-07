@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: Statement & Branch Coverage
+  # ──────────────────────────────────────────────
+  coverage:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[test]"
+
+      - name: Run tests with coverage
+        run: pytest
+
+      # Uploads coverage.xml to Codecov. Codecov posts a per-file coverage diff
+      # comment on PRs automatically and serves the README badges.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload HTML coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: htmlcov/
+          retention-days: 30
+
+  # ──────────────────────────────────────────────
+  # Job 2: Mutation Testing
+  # ──────────────────────────────────────────────
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    env:
+      MUTATE_PATHS: stistools/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[test]"
+
+      - name: Run mutation testing
+        run: mutmut run --paths-to-mutate "$MUTATE_PATHS" --tests-dir tests_sdet/ --runner "python -m pytest tests_sdet/ -x --assert=plain --no-cov -n auto"
+        continue-on-error: true
+
+      - name: Compute mutation score
+        if: always()
+        id: mutmut
+        run: |
+          python - <<'EOF' >> $GITHUB_OUTPUT
+          import subprocess, re
+          result = subprocess.run(['mutmut', 'results'], capture_output=True, text=True)
+          output = result.stdout + result.stderr
+          killed   = len(re.findall(r'(?m)^Killed',   output))
+          survived = len(re.findall(r'(?m)^Survived', output))
+          total = killed + survived
+          score = f'{killed / total * 100:.1f}' if total else 'N/A'
+          print(f'score={score}')
+          EOF
+
+      - name: Comment mutation results on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: mutation-report
+          message: |
+            ## Mutation Testing Report
+
+            | Metric | Value |
+            |--------|-------|
+            | **Mutation Score** | ${{ steps.mutmut.outputs.score }}% |
+
+            [View full output](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Upload mutation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: mutation-junit.xml
+          retention-days: 30
