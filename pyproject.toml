@@ -37,7 +37,7 @@ test = [
     "pytest-cov",
     "ci-watson>=0.8.0",
     "requests",
-    "mutmut",
+    "mutmut<2",
 ]
 docs = [
     "ipython",
@@ -95,7 +95,7 @@ show_missing = true
 [tool.mutmut]
 paths_to_mutate = "stistools/"
 tests_dir = "tests_sdet/"
-runner = "python -m pytest tests_sdet/ -x --assert=plain"
+runner = "python -m pytest tests_sdet/ -x --assert=plain --no-cov"
 
 [tool.setuptools_scm]
 write_to = "stistools/version.py"
