@@ -28,21 +28,16 @@ jobs:
         run: pip install -e ".[test]"
 
       - name: Run tests with coverage
-        run: pytest --cov-report=xml:coverage.xml
+        run: pytest
 
-      # PR: reads coverage.xml produced by pytest-cov and posts a coverage table comment.
-      - name: Coverage comment on PR
-        if: github.event_name == 'pull_request'
-        uses: MishaKav/pytest-coverage-comment@main
+      # Uploads coverage.xml to Codecov. Codecov posts a per-file coverage diff
+      # comment on PRs automatically and serves the README badges.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          pytest-xml-coverage-path: coverage.xml
-
-      # Push: commits an SVG badge to the `python-coverage-comment-action-data` branch.
-      - name: Update coverage badge
-        if: github.event_name == 'push'
-        uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Upload HTML coverage report
         if: always()

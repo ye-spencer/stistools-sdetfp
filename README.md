@@ -1,13 +1,28 @@
 # stistools
 
 [![Documentation Status](https://readthedocs.org/projects/stistools/badge/?version=latest)](https://stistools.readthedocs.io/en/latest/?badge=latest)
-[![Coverage](https://raw.githubusercontent.com/ye-spencer/stistools-sdetfp/python-coverage-comment-action-data/badge.svg)](https://github.com/ye-spencer/stistools-sdetfp/actions)
+[![codecov](https://codecov.io/gh/ye-spencer/stistools-sdetfp/graph/badge.svg)](https://codecov.io/gh/ye-spencer/stistools-sdetfp)
+
+[![Coverage sunburst](https://codecov.io/gh/ye-spencer/stistools-sdetfp/graphs/sunburst.svg)](https://codecov.io/gh/ye-spencer/stistools-sdetfp)
 
 ## For SDETFP
 
-Run `python -m pytest` to run the tests, this will only run the tests we developed. It includes coverage for the tests we developed in pyproject.toml.
+### Running tests locally
 
-Need to do `pip install -e ".[test, all]"` to install the package in editable mode with all dependencies.
+```bash
+# First-time setup
+pip install -e ".[test]"
+
+# Run tests with statement and branch coverage
+pytest
+```
+
+Three reports are generated:
+- **Terminal** — per-file line/branch summary (`--cov-report=term-missing`)
+- **`htmlcov/index.html`** — browsable HTML report (`--cov-report=html`)
+- **`coverage.xml`** — machine-readable XML used by CI and Codecov (`--cov-report=xml`)
+
+All `--cov` flags come from `[tool.pytest.ini_options] addopts` in `pyproject.toml`, so no extra arguments are needed.
 
 ## Original Readme
 
