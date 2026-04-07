@@ -78,7 +78,6 @@ jobs:
         id: mutmut
         run: |
           mutmut junitxml > mutation-junit.xml 2>/dev/null || true
-          mutmut html || true
           python - <<'EOF' >> $GITHUB_OUTPUT
           import xml.etree.ElementTree as ET
           try:
