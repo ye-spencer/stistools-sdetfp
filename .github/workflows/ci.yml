@@ -54,7 +54,7 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     env:
-      MUTATE_PATHS: stistools/calstis.py  # change to stistools/ to mutate all files
+      MUTATE_PATHS: stistools/
     steps:
       - uses: actions/checkout@v4
 
@@ -64,12 +64,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -e ".[test]"
-
-      - uses: actions/cache@v4
-        with:
-          path: .mutmut-cache
-          key: mutmut-${{ runner.os }}-${{ hashFiles('stistools/**/*.py') }}
-          restore-keys: mutmut-${{ runner.os }}-
 
       - name: Run mutation testing
         run: mutmut run --paths-to-mutate "$MUTATE_PATHS" --tests-dir tests_sdet/ --runner "python -m pytest tests_sdet/ -x --assert=plain --no-cov -n auto"
@@ -109,5 +103,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mutation-report
-          path: .mutmut-cache
+          path: mutation-junit.xml
           retention-days: 30
