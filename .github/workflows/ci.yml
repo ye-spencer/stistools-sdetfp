@@ -61,7 +61,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -e ".[test]" mutmut
+        run: pip install -e ".[test]"
 
       - uses: actions/cache@v4
         with:
@@ -100,14 +100,12 @@ jobs:
             |--------|-------|
             | **Mutation Score** | ${{ steps.mutmut.outputs.score }}% |
 
-            [Download HTML report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [View full output](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Upload mutation artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mutation-report
-          path: |
-            mutation-junit.xml
-            html/
+          path: .mutmut-cache
           retention-days: 30
