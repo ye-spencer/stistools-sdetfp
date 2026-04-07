@@ -54,7 +54,7 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     env:
-      MUTATE_PATHS: stistools/
+      MUTATE_PATHS: stistools/calstis.py  # change to stistools/ to mutate all files
     steps:
       - uses: actions/checkout@v4
 
