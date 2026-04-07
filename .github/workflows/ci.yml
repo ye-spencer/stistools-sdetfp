@@ -54,7 +54,7 @@ jobs:
     name: Mutation Testing
     runs-on: ubuntu-latest
     env:
-      MUTATE_PATHS: stistools/calstis.py  # change to stistools/ to mutate all files
+      MUTATE_PATHS: stistools/
     steps:
       - uses: actions/checkout@v4
 
@@ -72,7 +72,7 @@ jobs:
           restore-keys: mutmut-${{ runner.os }}-
 
       - name: Run mutation testing
-        run: mutmut run --paths-to-mutate "$MUTATE_PATHS" --tests-dir tests_sdet/ --runner "python -m pytest tests_sdet/ -x --assert=plain --no-cov"
+        run: mutmut run --paths-to-mutate "$MUTATE_PATHS" --tests-dir tests_sdet/ --runner "python -m pytest tests_sdet/ -x --assert=plain --no-cov -n auto"
         continue-on-error: true
 
       - name: Compute mutation score
