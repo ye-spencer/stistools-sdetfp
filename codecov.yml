@@ -11,3 +11,4 @@ coverage:
 comment:
   layout: "reach,diff,flags,files,footer"
   show_carryforward_flags: false
+  require_changes: false
