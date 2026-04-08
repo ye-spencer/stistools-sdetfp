@@ -37,7 +37,7 @@ test = [
     "pytest-cov",
     "ci-watson>=0.8.0",
     "requests",
-    "mutmut<2",
+    "mutmut",
     "pytest-xdist",
 ]
 docs = [
