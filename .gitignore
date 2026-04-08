@@ -6,3 +6,7 @@ dist/
 *.so
 *.egg-info
 *.swp
+
+.coverage
+coverage.xml
+
