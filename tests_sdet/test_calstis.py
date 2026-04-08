@@ -12,3 +12,8 @@ def test_get_docs():
 def test_main_no_args():
     with pytest.raises(SystemExit):
         calstis.main([])
+
+def test_main_invalid_option():
+    with pytest.raises(SystemExit):
+        calstis.main(["--invalid"])
+
