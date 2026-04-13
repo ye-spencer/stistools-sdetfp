@@ -122,3 +122,11 @@ def test_calstis_all_options_no_verbose(mocker, tmp_path):
     infile.touch()
 
     assert calstis.calstis(str(infile), wavecal="test.wav", outroot="out/", savetmp=True, timestamps=True) == 0
+
+# Blackbox: test cs0.e returns non-zero status
+def test_calstis_cs0_returns_non_zero(mocker, tmp_path):
+    mock_call = mocker.patch("stistools.calstis.subprocess.call", return_value=1)
+    infile = tmp_path / "test_raw.fits"
+    infile.touch()
+
+    assert calstis.calstis(str(infile)) != 0
