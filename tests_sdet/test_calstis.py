@@ -75,12 +75,14 @@ def test_main_too_many_args():
         calstis.main(["arg1", "arg2", "arg3"])
 
 
+# Branch coverage: print_version branch calls cs0.e correctly and returns 0.
 def test_calstis_print_version(mocker):
     mock_call = mocker.patch("stistools.calstis.subprocess.call", return_value=0)
 
     assert calstis.calstis("test.fits", print_version=True) == 0
     mock_call.assert_called_once_with(["cs0.e", "--version"])
 
+# Branch coverage: print_revision branch calls cs0.e correctly and returns 0.
 def test_calstis_print_r(mocker):
     mock_call = mocker.patch("stistools.calstis.subprocess.call", return_value=0)
 
@@ -112,3 +114,11 @@ def test_calstis_all_options(mocker, tmp_path):
         savetmp=True, verbose=True, timestamps=True, trailer=str(trailer)
     )
     assert result == 1
+
+# Branch coverage: no verbose flag
+def test_calstis_all_options_no_verbose(mocker, tmp_path):
+    mock_call = mocker.patch("stistools.calstis.subprocess.call", return_value=0)
+    infile = tmp_path / "test_raw.fits"
+    infile.touch()
+
+    assert calstis.calstis(str(infile), wavecal="test.wav", outroot="out/", savetmp=True, timestamps=True) == 0
