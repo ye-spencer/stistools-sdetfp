@@ -39,6 +39,7 @@ test = [
     "requests",
     "mutmut",
     "pytest-xdist",
+    "pytest-mock",
 ]
 docs = [
     "ipython",
