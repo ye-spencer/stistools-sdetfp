@@ -1,5 +1,6 @@
 from stistools import evaldisp
 
+# statement coverage of newton()
 def test_newton():
     coeff = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     cenwave = 500.0
@@ -7,6 +8,7 @@ def test_newton():
     wl = evaldisp.newton(x, coeff, cenwave)
     assert wl == 500.0
 
+# statement coverage of evalDisp()
 def test_evalDisp():
     coeff = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     wl = 500.0
