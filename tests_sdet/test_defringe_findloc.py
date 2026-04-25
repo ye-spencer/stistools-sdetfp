@@ -1,5 +1,6 @@
 import numpy as np
 from stistools.defringe._findloc import find_loc
+from stistools.defringe import _findloc
 
 class DummyPoly:
     class C:
