@@ -100,5 +100,5 @@ write_to = "stistools/version.py"
 [tool.mutmut]
 paths_to_mutate = ["stistools/"]
 tests_dir = ["tests_sdet/"]
-runner = "python -m pytest -x -q --no-cov"
+runner = "python -m pytest -o addopts= -x -q tests_sdet/"
 do_not_mutate = ["stistools/version.py", "stistools/__init__.py"]
