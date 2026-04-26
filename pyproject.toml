@@ -96,3 +96,9 @@ show_missing = true
 
 [tool.setuptools_scm]
 write_to = "stistools/version.py"
+
+[tool.mutmut]
+paths_to_mutate = ["stistools/"]
+tests_dir = ["tests_sdet/"]
+runner = "python -m pytest -x -q --no-cov"
+do_not_mutate = ["stistools/version.py", "stistools/__init__.py"]
