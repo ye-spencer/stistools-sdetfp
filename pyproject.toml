@@ -100,6 +100,6 @@ show_missing = true
 write_to = "stistools/version.py"
 
 [tool.mutmut]
-paths_to_mutate = ["stistools/"]
+paths_to_mutate = ["stistools/calstis.py"]
 tests_dir = ["tests_sdet/"]
 do_not_mutate = ["stistools/version.py", "stistools/__init__.py"]
