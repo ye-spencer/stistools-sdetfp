@@ -21,10 +21,12 @@ from stistools.gettable import (
 )
 
 
+# MOCKING HELPERS
+
 def _make_recarray(**columns):
-    # build a numpy recarray from given column data
-    names   = list(columns.keys())
-    arrays  = list(columns.values())
+    """Helper function for building a numpy recarray from column data."""
+    names = list(columns.keys())
+    arrays = list(columns.values())
     formats = []
     for col in arrays:
         if len(col) == 0:
@@ -36,27 +38,25 @@ def _make_recarray(**columns):
         else:
             formats.append('f8')
     dtype = np.dtype({'names': names, 'formats': formats})
-    rows  = np.array([tuple(r) for r in zip(*arrays)], dtype=dtype)
+    rows = np.array([tuple(r) for r in zip(*arrays)], dtype=dtype)
     return rows.view(np.recarray)
 
-
 def _mock_fd(recarray):
-    # return a magic mock for a FITS file descriptor
-    fd   = MagicMock()
+    """Helper function for creating a mock FITS file descriptor with a given recarray."""
+    fd = MagicMock()
     ext1 = MagicMock()
     ext1.data = recarray
     fd.__getitem__ = lambda self, i: ext1
     fd.close = MagicMock()
     return fd
 
-
 class FakeTrace:
-
+    """Mock class to mimic the trace interface expected by rotateTrace."""
     def __init__(self, degperyr, mjd, nelem, a2displ, include_rot_cols=True):
         self._degperyr = np.array(degperyr, dtype=np.float64)
-        self._mjd      = np.array(mjd,      dtype=np.float64)
-        self._nelem    = np.array(nelem,    dtype=np.int32)
-        self._a2displ  = [np.array(a, dtype=np.float64) for a in a2displ]
+        self._mjd = np.array(mjd, dtype=np.float64)
+        self._nelem = np.array(nelem, dtype=np.int32)
+        self._a2displ = [np.array(a, dtype=np.float64) for a in a2displ]
         if include_rot_cols:
             self.names = ['degperyr', 'mjd', 'nelem', 'a2displ']
         else:
@@ -65,13 +65,36 @@ class FakeTrace:
     def field(self, name):
         return {
             'degperyr': self._degperyr,
-            'mjd':      self._mjd,
-            'nelem':    self._nelem,
-            'a2displ':  self._a2displ,
+            'mjd': self._mjd,
+            'nelem': self._nelem,
+            'a2displ': self._a2displ,
         }[name.lower()]
 
     def __len__(self):
         return len(self._degperyr)
+
+
+# CONSTANTS
+
+class TestConstants:
+
+    def test_string_wildcard_value(self):
+        assert STRING_WILDCARD == "ANY"
+
+    def test_int_wildcard_value(self):
+        assert INT_WILDCARD == -1
+
+    def test_string_wildcard_type(self):
+        assert isinstance(STRING_WILDCARD, str)
+
+    def test_int_wildcard_type(self):
+        assert isinstance(INT_WILDCARD, int)
+
+    def test_int_wildcard_is_negative(self):
+        assert INT_WILDCARD < 0
+
+
+# BLACK-BOX TESTING
 
 class TestSortrows:
 
@@ -97,8 +120,7 @@ class TestSortrows:
 
     def test_descending_floats(self):
         ra = _make_recarray(X=[3.3, 1.1, 2.2])
-        assert list(sortrows(ra, 'X', ascend=False).field('X')) == pytest.approx(
-            [3.3, 2.2, 1.1])
+        assert list(sortrows(ra, 'X', ascend=False).field('X')) == pytest.approx([3.3, 2.2, 1.1])
 
     def test_ascending_strings(self):
         ra = _make_recarray(N=['charlie', 'alice', 'bob'])
@@ -106,15 +128,14 @@ class TestSortrows:
 
     def test_descending_strings(self):
         ra = _make_recarray(N=['charlie', 'alice', 'bob'])
-        assert list(sortrows(ra, 'N', ascend=False).field('N')) == [
-            'charlie', 'bob', 'alice']
+        assert list(sortrows(ra, 'N', ascend=False).field('N')) == ['charlie', 'bob', 'alice']
 
     def test_sort_preserves_other_columns(self):
         ra = _make_recarray(K=[3, 1, 2], P=[30, 10, 20])
         assert list(sortrows(ra, 'K').field('P')) == [10, 20, 30]
 
     def test_sort_does_not_mutate_original(self):
-        ra     = _make_recarray(V=[3, 1, 2])
+        ra = _make_recarray(V=[3, 1, 2])
         before = list(ra.field('V'))
         sortrows(ra, 'V')
         assert list(ra.field('V')) == before
@@ -139,16 +160,19 @@ class TestSortrows:
         ra = _make_recarray(V=[3, 1, 2])
         assert hasattr(sortrows(ra, 'V'), 'field')
 
+
+# WHITE-BOX TESTING
+
 class TestRotateTraceEarlyReturn:
 
     def test_negative_expstart_no_change(self):
-        ti   = FakeTrace([5.0], [50000.0], [4], [np.zeros(4)])
+        ti = FakeTrace([5.0], [50000.0], [4], [np.zeros(4)])
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, -1.0)
         assert np.allclose(ti.field('a2displ')[0], orig)
 
     def test_negative_expstart_minus_100_no_change(self):
-        ti   = FakeTrace([5.0], [50000.0], [4], [np.ones(4) * 7.0])
+        ti = FakeTrace([5.0], [50000.0], [4], [np.ones(4) * 7.0])
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, -100.0)
         assert np.allclose(ti.field('a2displ')[0], orig)
@@ -159,8 +183,7 @@ class TestRotateTraceEarlyReturn:
         assert np.allclose(ti.field('a2displ')[0], np.zeros(4))
 
     def test_missing_both_rotation_cols_no_change(self):
-        ti   = FakeTrace([1.0], [50000.0], [4], [np.zeros(4)],
-                         include_rot_cols=False)
+        ti = FakeTrace([1.0], [50000.0], [4], [np.zeros(4)], include_rot_cols=False)
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, 55000.0)
         assert np.allclose(ti.field('a2displ')[0], orig)
@@ -170,11 +193,11 @@ class TestRotateTraceEarlyReturn:
             names = ['degperyr', 'nelem', 'a2displ']
             def field(self, n):
                 return {'degperyr': np.array([10.0]),
-                        'nelem':    np.array([3]),
-                        'a2displ':  [np.zeros(3)]}[n.lower()]
+                        'nelem': np.array([3]),
+                        'a2displ': [np.zeros(3)]}[n.lower()]
             def __len__(self): return 1
 
-        ti   = OnlyDegperyr()
+        ti = OnlyDegperyr()
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, 55000.0)
         assert np.allclose(ti.field('a2displ')[0], orig)
@@ -183,36 +206,23 @@ class TestRotateTraceEarlyReturn:
         class OnlyMjd:
             names = ['mjd', 'nelem', 'a2displ']
             def field(self, n):
-                return {'mjd':     np.array([50000.0]),
-                        'nelem':   np.array([3]),
+                return {'mjd': np.array([50000.0]),
+                        'nelem': np.array([3]),
                         'a2displ': [np.zeros(3)]}[n.lower()]
             def __len__(self): return 1
 
-        ti   = OnlyMjd()
+        ti = OnlyMjd()
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, 55000.0)
         assert np.allclose(ti.field('a2displ')[0], orig)
 
-class TestRotateTraceZeroEffect:
-
-    def test_zero_degperyr_no_change(self):
-        a2 = np.array([1.0, 2.0, 3.0, 4.0])
-        ti = FakeTrace([0.0], [50000.0], [4], [a2.copy()])
-        rotateTrace(ti, 55000.0)
-        assert np.allclose(ti.field('a2displ')[0], a2)
-
-    def test_expstart_equals_mjd_no_change(self):
-        a2 = np.array([5.0, 6.0, 7.0])
-        ti = FakeTrace([10.0], [50000.0], [3], [a2.copy()])
-        rotateTrace(ti, 50000.0)
-        assert np.allclose(ti.field('a2displ')[0], a2)
 
 class TestRotateTraceNumericCorrectness:
 
     def test_known_rotation_single_row(self):
         degperyr = 36.525
         mjd = 50000.0
-        expstart = 50365.25   # exactly one year later
+        expstart = 50365.25
         nelem = 5
         ti = FakeTrace([degperyr], [mjd], [nelem], [np.zeros(nelem)])
         rotateTrace(ti, expstart)
@@ -253,8 +263,7 @@ class TestRotateTraceNumericCorrectness:
         ti_neg = FakeTrace([-10.0], [50000.0], [nelem], [np.zeros(nelem)])
         rotateTrace(ti_pos, 50100.0)
         rotateTrace(ti_neg, 50100.0)
-        assert np.allclose(ti_pos.field('a2displ')[0],
-                           -ti_neg.field('a2displ')[0])
+        assert np.allclose(ti_pos.field('a2displ')[0], -ti_neg.field('a2displ')[0])
 
     def test_a2displ_modified_in_place(self):
         a2_orig = np.zeros(4)
@@ -278,10 +287,26 @@ class TestRotateTraceNumericCorrectness:
 
             def __len__(self): return 1
 
-        ti   = UpperNames()
+        ti = UpperNames()
         orig = ti.field('a2displ')[0].copy()
         rotateTrace(ti, 50100.0)
         assert not np.allclose(ti.field('a2displ')[0], orig)
+
+
+class TestRotateTraceZeroEffect:
+
+    def test_zero_degperyr_no_change(self):
+        a2 = np.array([1.0, 2.0, 3.0, 4.0])
+        ti = FakeTrace([0.0], [50000.0], [4], [a2.copy()])
+        rotateTrace(ti, 55000.0)
+        assert np.allclose(ti.field('a2displ')[0], a2)
+
+    def test_expstart_equals_mjd_no_change(self):
+        a2 = np.array([5.0, 6.0, 7.0])
+        ti = FakeTrace([10.0], [50000.0], [3], [a2.copy()])
+        rotateTrace(ti, 50000.0)
+        assert np.allclose(ti.field('a2displ')[0], a2)
+
 
 class TestRotateTraceMultipleRows:
 
@@ -296,8 +321,7 @@ class TestRotateTraceMultipleRows:
         mjd_val = 50000.0
         expstart = 50100.0
         nelem = 4
-        ti = FakeTrace(degperyr_list, [mjd_val] * 2, [nelem] * 2,
-                       [np.zeros(nelem), np.zeros(nelem)])
+        ti = FakeTrace(degperyr_list, [mjd_val] * 2, [nelem] * 2, [np.zeros(nelem), np.zeros(nelem)])
         rotateTrace(ti, expstart)
 
         for i, dpy in enumerate(degperyr_list):
@@ -316,6 +340,9 @@ class TestRotateTraceMultipleRows:
         ti = FakeTrace([10.0, 20.0], [50000.0, 50000.0], [4, 4], [np.zeros(4), np.zeros(4)])
         rotateTrace(ti, 50100.0)
         assert not np.allclose(ti.field('a2displ')[0], ti.field('a2displ')[1])
+
+
+# WHITE-BOX + MOCKING
 
 class TestGetTableFitsInterface:
 
@@ -339,6 +366,7 @@ class TestGetTableFitsInterface:
         getTable('t.fits', {})
         fd.close.assert_called_once()
 
+
 class TestGetTableEmptyColumn:
 
     def test_empty_column_returns_none(self, mocker):
@@ -353,6 +381,7 @@ class TestGetTableEmptyColumn:
         mocker.patch('stistools.gettable.fits.open', return_value=fd)
         getTable('t.fits', {'NAME': 'x'})
         assert not fd.close.called
+
 
 class TestGetTableEmptyFilter:
 
@@ -390,8 +419,7 @@ class TestGetTableStringWildcardFilterValue:
     def test_all_wildcard_filter_values_return_all_rows(self, mocker):
         ra = _make_recarray(A=['x', 'y'], B=['p', 'q'])
         mocker.patch('stistools.gettable.fits.open', return_value=_mock_fd(ra))
-        result = getTable('t.fits',
-                          {'A': STRING_WILDCARD, 'B': STRING_WILDCARD})
+        result = getTable('t.fits', {'A': STRING_WILDCARD, 'B': STRING_WILDCARD})
         assert len(result) == 2
 
 class TestGetTableStrBytesWildcardInTable:
@@ -437,7 +465,6 @@ class TestGetTableStrBytesWildcardInTable:
         with pytest.raises(RuntimeError):
             # at_least_one=True so no-match raises rather than hitting the None bug
             getTable('t.fits', {'COL': b'other'}, at_least_one=True)
-
 
 class TestGetTableIntWildcardInTable:
 
@@ -529,8 +556,7 @@ class TestGetTableNoMatch:
         ra = _make_recarray(NAME=['alpha'])
         mocker.patch('stistools.gettable.fits.open', return_value=_mock_fd(ra))
         with pytest.raises(RuntimeError):
-            getTable('t.fits', {'NAME': 'z'},
-                     exactly_one=True, at_least_one=True)
+            getTable('t.fits', {'NAME': 'z'}, exactly_one=True, at_least_one=True)
 
     def test_multi_key_no_common_row_raises(self, mocker):
         ra = _make_recarray(T=['A', 'B'], V=[np.int32(1), np.int32(2)])
@@ -630,20 +656,3 @@ class TestGetTableSortcol:
         mocker.patch('stistools.gettable.fits.open', return_value=_mock_fd(ra))
         result = getTable('t.fits', {}, sortcol='V')
         assert list(result.field('V')) == [1, 2, 3]
-
-class TestConstants:
-
-    def test_string_wildcard_value(self):
-        assert STRING_WILDCARD == "ANY"
-
-    def test_int_wildcard_value(self):
-        assert INT_WILDCARD == -1
-
-    def test_string_wildcard_type(self):
-        assert isinstance(STRING_WILDCARD, str)
-
-    def test_int_wildcard_type(self):
-        assert isinstance(INT_WILDCARD, int)
-
-    def test_int_wildcard_is_negative(self):
-        assert INT_WILDCARD < 0
