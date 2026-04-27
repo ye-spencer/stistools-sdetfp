@@ -885,16 +885,6 @@ class TestTastisACQMocked:
 
         mocker.patch('stistools.tastis.fits.getheader', side_effect=getheader_side_effect)
 
-    # def test_returns_integer(self, capsys):
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_spt_not_found_sets_empty_fgs(self, mocker, capsys):
-    #     mocker.patch('stistools.tastis.os.path.exists', return_value=False)
-    #     result = t.tastis('test_raw.fits')
-    #     # with no spt, domfgs/subfgs should be ""
-    #     assert isinstance(result, int)
-
     def test_update_false_does_not_open_for_update(self, mocker, capsys):
         open_mock = mocker.patch('stistools.tastis.fits.open', return_value=self.raw_hdulist)
         t.tastis('test_raw.fits', update=False)
@@ -907,67 +897,6 @@ class TestTastisACQMocked:
         t.tastis('test_raw.fits', update=True)
         calls = [c for c in open_mock.call_args_list if "update" in str(c).lower()]
         assert len(calls) >= 1
-
-    # def test_propaper_e1_suffix_used_as_aperture(self, mocker, capsys):
-    #     hdu = _make_mock_raw_hdu(obsmode='ACQ', propaper='52X0.1E1')
-    #     mocker.patch('stistools.tastis.fits.open', return_value=hdu)
-
-    #     def gh(f, ext=0):
-    #         if 'spt' in f:
-    #             return self.spt_prim_header if ext == 0 else self.spt_ext1_header
-    #         return hdu[0].header
-    #     mocker.patch('stistools.tastis.fits.getheader', side_effect=gh)
-    #     # should not raise
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_propaper_d1_suffix_used_as_aperture(self, mocker, capsys):
-    #     hdu = _make_mock_raw_hdu(obsmode='ACQ', propaper='52X0.1D1')
-    #     mocker.patch('stistools.tastis.fits.open', return_value=hdu)
-
-    #     def gh(f, ext=0):
-    #         if 'spt' in f:
-    #             return self.spt_prim_header if ext == 0 else self.spt_ext1_header
-    #         return hdu[0].header
-    #     mocker.patch('stistools.tastis.fits.getheader', side_effect=gh)
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_acqtype_not_point_uses_centmeth(self, mocker, capsys):
-    #     hdu = _make_mock_raw_hdu(obsmode='ACQ', acqtype='MAP')
-    #     mocker.patch('stistools.tastis.fits.open', return_value=hdu)
-
-    #     def gh(f, ext=0):
-    #         if 'spt' in f:
-    #             return self.spt_prim_header if ext == 0 else self.spt_ext1_header
-    #         return hdu[0].header
-    #     mocker.patch('stistools.tastis.fits.getheader', side_effect=gh)
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_linenum_no_period_sets_expnum_zero(self, mocker, capsys):
-    #     hdu = _make_mock_raw_hdu(obsmode='ACQ', LINENUM='01')
-    #     mocker.patch('stistools.tastis.fits.open', return_value=hdu)
-
-    #     def gh(f, ext=0):
-    #         if 'spt' in f:
-    #             return self.spt_prim_header if ext == 0 else self.spt_ext1_header
-    #         return hdu[0].header
-    #     mocker.patch('stistools.tastis.fits.getheader', side_effect=gh)
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_box_step_greater_than_3_applies_offset(self, mocker, capsys):
-    #     hdu = _make_mock_raw_hdu(obsmode='ACQ', box_step=5)
-    #     mocker.patch('stistools.tastis.fits.open', return_value=hdu)
-
-    #     def gh(f, ext=0):
-    #         if 'spt' in f:
-    #             return self.spt_prim_header if ext == 0 else self.spt_ext1_header
-    #         return hdu[0].header
-    #     mocker.patch('stistools.tastis.fits.getheader', side_effect=gh)
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
 
 
 class TestTastisPeakMocked:
@@ -989,14 +918,6 @@ class TestTastisPeakMocked:
 
         mocker.patch('stistools.tastis.fits.getheader', side_effect=getheader_side_effect)
 
-    # def test_acq_peak_returns_integer(self, capsys):
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
-
-    # def test_acq_peak_no_spt_not_raises(self, mocker, capsys):
-    #     mocker.patch('stistools.tastis.os.path.exists', return_value=False)
-    #     result = t.tastis('test_raw.fits')
-    #     assert isinstance(result, int)
 
 class TestReadKeywords:
 
@@ -1104,3 +1025,182 @@ class TestBitFlags:
     def test_fatal_error_value(self):
         from stistools.tastis import FATAL_ERROR
         assert FATAL_ERROR == 2
+
+class TestTastisMainFunction:
+
+    @patch('stistools.tastis.os.path.exists', return_value=True) 
+    @patch('stistools.tastis.fits')
+    @patch('stistools.tastis._read_keywords')
+    @patch('stistools.tastis._calculate_slews')
+    @patch('stistools.tastis._print_warnings')
+    def test_tastis_default_prints_to_console(self, mock_warn, mock_calc, mock_read, mock_fits, mock_exists, capsys):
+        """
+        Tests that calling tastis() with update=False orchestrates the internal
+        functions and prints the analysis to the console.
+        """
+        mock_read.return_value = _make_acq_keywords() 
+        mock_calc.return_value = (0.5, 0.5, 0.1, 0.1) 
+
+        t.tastis('dummy_raw.fits', update=False)
+
+        mock_read.assert_called_once()
+        mock_calc.assert_called_once()
+        
+        captured = capsys.readouterr()
+        assert 'ACQ' in captured.out
+        assert 'TARGET1' in captured.out 
+
+    @patch('stistools.tastis.os.path.exists', return_value=True) 
+    @patch('stistools.tastis.fits.open') 
+    @patch('stistools.tastis.fits.setval') 
+    @patch('stistools.tastis._read_keywords')
+    @patch('stistools.tastis._calculate_slews')
+    @patch('stistools.tastis._print_warnings')
+    def test_tastis_update_modifies_header(self, mock_warn, mock_calc, mock_read, mock_setval, mock_fits_open, mock_exists):
+        """
+        Tests the update=True branch to ensure it attempts to write the flags.
+        """
+        mock_keywords = _make_acq_keywords()
+        mock_keywords['flags'] = BAD_ACQ 
+        mock_read.return_value = mock_keywords
+        mock_calc.return_value = (0.0, 0.0, 0.0, 0.0)
+
+        safe_dummy_header = {
+            'OBSMODE': 'ACQ',
+            'OBSTYPE': 'IMAGING',
+            'INSTRUME': 'STIS',
+            'dgestar': 'FGS1',
+            'sgestar': 'FGS2',
+        }
+
+        with patch('stistools.tastis.fits.getheader', return_value=safe_dummy_header):
+            
+            # Apply the safe header to our fits.open mock
+            mock_hdu0 = MagicMock()
+            mock_hdu0.header = safe_dummy_header # <--- Populated header!
+            
+            mock_hdulist = MagicMock()
+            mock_hdulist.__getitem__.return_value = mock_hdu0
+            mock_hdulist.__enter__.return_value = mock_hdulist
+            mock_hdulist.__exit__.return_value = None
+            
+            mock_fits_open.return_value = mock_hdulist
+
+            # Execute the function
+            t.tastis('dummy_raw.fits', update=True)
+
+        # Assert that SOME file-write operation occurred!
+        opened_in_update_mode = mock_fits_open.called and 'update' in str(mock_fits_open.call_args).lower()
+        used_setval = mock_setval.called
+        
+        assert opened_in_update_mode or used_setval, "tastis did not attempt to update the file!"
+
+# class TestTastisAcqPeakUpdates:
+    
+#     @pytest.mark.parametrize("badacq_flag, expected_rat, expected_flx, expected_sat, expected_end", [
+#         (BAD_RATIO_HIGH | BAD_FLUX | BAD_SATURATED | BAD_END, 'HIRATIO', 'LO_FLUX', 'SAT', 'HI_END'),
+#         (BAD_RATIO_LOW, 'LORATIO', 'OK_FLUX', 'UNSAT', 'OK_END'),
+#         (0, 'OKRATIO', 'OK_FLUX', 'UNSAT', 'OK_END')
+#     ])
+#     @patch('stistools.tastis.os.path.exists', return_value=True) 
+#     @patch('stistools.tastis.fits.open') 
+#     @patch('stistools.tastis.fits.getheader', return_value={
+#         'OBSMODE': 'ACQ/PEAK', 'obsmode': 'ACQ/PEAK', 
+#         'dgestar': 'FGS1', 'DGESTAR': 'FGS1',
+#         'ocstdfx': 0.0, 'OCSTDFX': 0.0
+#     })
+#     @patch('stistools.tastis.fits.setval') 
+#     @patch('stistools.tastis._read_keywords')
+#     @patch('stistools.tastis._calculate_slews')
+#     @patch('stistools.tastis._print_warnings')
+
+    # def test_acq_peak_flag_updates(self, mock_warn, mock_calc, mock_read, mock_setval, mock_getheader, mock_fits_open, mock_exists, badacq_flag, expected_rat, expected_flx, expected_sat, expected_end): 
+        
+    #     # 1. Force getheader to return safe fallbacks
+    #     mock_getheader.return_value = {'obsmode': 'ACQ/PEAK', 'dgestar': 'FGS1', 'ocstdfx': 0.0}
+
+    #     # 2. Build the keywords dictionary from scratch to prevent flag leaks
+    #     mock_keywords = _make_acq_keywords()
+    #     mock_keywords['obsmode'] = 'ACQ/PEAK' 
+    #     mock_keywords['peakcent'] = 'YES'
+    #     mock_keywords['search'] = 'YES'
+    #     mock_keywords['pedestal'] = 15.0
+    #     mock_keywords['dwell'] = np.zeros((15, 20)) 
+        
+    #     # EXPLICITLY set the flag in the keywords dict
+    #     mock_keywords['flags'] = badacq_flag 
+    #     mock_read.return_value = mock_keywords
+        
+    #     # EXPLICITLY set the flag in the slew calculator return
+    #     mock_calc.return_value = (0.0, 0.0, badacq_flag, 0)
+
+    #     # 3. Setup the target FITS header
+    #     mock_hdu0 = MagicMock()
+    #     mock_hdu0.header = {'OBSMODE': 'ACQ/PEAK'}
+    #     mock_hdulist = MagicMock()
+    #     mock_hdulist.__getitem__.return_value = mock_hdu0
+    #     mock_hdulist.__enter__.return_value = mock_hdulist
+    #     mock_hdulist.__exit__.return_value = None
+    #     mock_fits_open.return_value = mock_hdulist
+
+    #     # 4. Execute
+    #     t.tastis('dummy.fits', update=True)
+
+    #     # 5. Assert
+    #     h = mock_hdu0.header
+    #     assert h['acqp_rat'] == expected_rat
+    #     assert h['acqp_flx'] == expected_flx
+    #     assert h['acqp_sat'] == expected_sat
+    #     assert h['acqp_end'] == expected_end
+
+class TestReadKeywordsAcqPeak:
+
+    @patch('stistools.tastis.fits.open')
+    @patch('stistools.tastis.fits.getheader')
+    def test_read_keywords_acq_peak_extensions(self, mock_getheader, mock_fits_open):
+
+        mock_hdu0 = MagicMock()
+        mock_hdu0.header = {
+            'obsmode': 'ACQ/PEAK', 'obstype': 'IMAGING', 'rootname': 'test', 
+            'proposid': 1, 'visit': '1', 'expnum': 1, 'targname': 'T1', 
+            'tdateobs': 'D', 'ttimeobs': 'T', 'texptime': 1.0, 'opt_elem': 'G', 
+            'cenwave': 1, 'aperture': 'A', 'maxsrch': 1, 'centera1': 512, 
+            'centera2': 512, 'sizaxis1': 1024, 'sizaxis2': 1024, 'ltv1': 0, 'ltv2': 0,
+            'peakcent': 'YES', 'pksearch': 'YES', 'numsteps': 5, 
+            'peakstep': 0.1, 'pedestal': 15.0,
+            'biaslev': 0.0, 'linenum': '01.1', 'checkbox': 5, 'propaper': '52X0.2', 'ocstdfx': 0.0
+        }
+        
+        mock_hdu1 = MagicMock()
+        mock_hdu1.header = {
+            'goodmax': 500.0, 
+            'ngoodpix': 10, 
+            'goodmean': 5.0, 
+            'biaslev': 0.0,
+            'ocstdfx': 0.0 
+        }      
+  
+        mock_hdu4 = MagicMock()
+        mock_hdu4.data = np.zeros((15, 20)) 
+
+        mock_hdulist = MagicMock()
+        mock_hdulist.__getitem__.side_effect = lambda idx: {0: mock_hdu0, 1: mock_hdu1, 4: mock_hdu4}[idx]
+        mock_hdulist.__enter__.return_value = mock_hdulist
+        mock_hdulist.__exit__.return_value = None
+        mock_fits_open.return_value = mock_hdulist
+        
+        def spt_header_side_effect(filename, ext=0):
+            if ext == 0:
+                return {'dgestar': 'FGS1', 'ocstdfx': 0.0}
+            elif ext == 1:
+                return {'otaslwa1': 1.23, 'otaslwa2': 4.56, 'ocstdfx': 0.0} 
+        mock_getheader.side_effect = spt_header_side_effect
+        
+        result = t._read_keywords('dummy_raw.fits', 'dummy_spt.fits', spt_exists=True)
+        
+        assert result['peakcent'] == 'YES'
+        assert result['box_step'] == 5
+        assert result['goodmax1'] == 500.0
+        assert result['otaslwa1'] == 1.23
+        assert result['naxis1'] == 20 
+        assert result['naxis2'] == 15
