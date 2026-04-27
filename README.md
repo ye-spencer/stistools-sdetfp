@@ -7,22 +7,44 @@
 
 ## For SDETFP
 
-### Running tests locally
+### Running Blackbox and Whitebox tests locally
 
 ```bash
 # First-time setup
 pip install -e ".[test]"
 
 # Run tests with statement and branch coverage
-pytest
+python -m pytest
 ```
 
-Three reports are generated:
-- **Terminal** — per-file line/branch summary (`--cov-report=term-missing`)
-- **`htmlcov/index.html`** — browsable HTML report (`--cov-report=html`)
-- **`coverage.xml`** — machine-readable XML used by CI and Codecov (`--cov-report=xml`)
+Then open `htmlcov/index.html` locally to view coverage results for your branch.
 
-All `--cov` flags come from `[tool.pytest.ini_options] addopts` in `pyproject.toml`, so no extra arguments are needed.
+### Running Mutating tests locally
+```bash
+# First-time setup
+pip install -e ".[test]"
+
+# Run mutating tests 
+mutmut run
+
+# View results
+mutmut results
+```
+
+### Running Documentation tests locally
+```bash
+# First-time setup
+pip install -e ".[test]"
+
+# Run documentation tests 
+interrogate -vv .\stistools\ --fail-under 75
+
+pydocstyle --count .\stistools\
+
+```
+
+
+
 
 ## Original Readme
 

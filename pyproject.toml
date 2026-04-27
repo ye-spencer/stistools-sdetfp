@@ -40,6 +40,8 @@ test = [
     "mutmut",
     "pytest-xdist",
     "pytest-mock",
+    "interrogate>=1.2.0",
+    "pydocstyle",
 ]
 docs = [
     "ipython",
