@@ -46,7 +46,7 @@ do_not_mutate = stistools/version.py,stistools/__init__.py
 debug = true
 
 # Then run:
-bashmutmut run
+mutmut run
 
 # View summary score
 mutmut results
