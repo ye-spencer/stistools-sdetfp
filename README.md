@@ -24,8 +24,24 @@ python -m pytest --cov=stistools --cov-branch --cov-report=html --cov-report=ter
 # First-time setup
 pip install -e ".[test]"
 
-# Run mutating tests 
+# To run mutating tests on a file, edit the [tool.mutmut] section of pyproject.toml:
+[tool.mutmut]
+paths_to_mutate = ["stistools/<file being tested>"]
+tests_dir = ["tests_sdet/<test file>"]
+also_copy = ["tests_sdet"]
+runner = "python -m pytest -o addopts= -x -q tests_sdet/<test file>"
+do_not_mutate = ["stistools/version.py", "stistools/__init__.py"]
+debug = true
+# And then run:
 mutmut run
+# If this does not work, you may need to create a new file named setup.sfg with the following:
+[mutmut]
+paths_to_mutate=stistools/<file being tested>
+tests_dir=tests_sdet
+also_copy=tests_sdet
+runner=python -m pytest -o addopts= -x -q tests_sdet/<test file>
+do_not_mutate=stistools/version.py,stistools/__init__.py
+debug=true
 
 # View summary score
 mutmut results
