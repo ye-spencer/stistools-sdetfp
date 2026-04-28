@@ -14,10 +14,10 @@
 pip install -e ".[test]"
 
 # Run tests with statement and branch coverage
-python -m pytest
-```
+python -m pytest --cov=stistools --cov-branch --cov-report=html --cov-report=term-missing
 
-Then open `htmlcov/index.html` locally to view coverage results for your branch.
+# Then open `htmlcov/index.html` locally to view coverage results for your branch. 
+```
 
 ### Running Mutating tests locally
 ```bash
@@ -27,8 +27,18 @@ pip install -e ".[test]"
 # Run mutating tests 
 mutmut run
 
-# View results
+# View summary score
 mutmut results
+
+# See every surviving mutant
+mutmut results --all True
+
+# Inspect a specific surviving mutant (substitute the ID from results)
+mutmut show <mutant_id>
+
+# To start a fresh run and clear cached results
+rm -f .mutmut-cache
+mutmut run stistools/
 ```
 
 ### Running Documentation tests locally
@@ -36,15 +46,12 @@ mutmut results
 # First-time setup
 pip install -e ".[test]"
 
-# Run documentation tests 
-interrogate -vv .\stistools\ --fail-under 75
+# Check documentation coverage (fail if below 75%)
+interrogate -vv stistools/ --fail-under 75
 
-pydocstyle --count .\stistools\
-
+# Check docstring style
+pydocstyle --count stistools/
 ```
-
-
-
 
 ## Original Readme
 
@@ -66,3 +73,43 @@ New functions and or new functionality should have appropriate unit tests.  Test
 
 ## Pep 8
 Try to adhere to pep 8 standards when reasonable.  Code comments are heartily encouraged!
+
+
+
+# Running blackbox and whitebox tests locally
+
+## First-time setup
+pip install -e ".[test]"
+
+## Run tests with statement AND branch coverage
+python -m pytest --cov=stistools --cov-branch --cov-report=html --cov-report=term-missing
+
+## Then open htmlcov/index.html to view full coverage breakdown
+
+# Running mutation tests locally
+
+## First-time setup (already done above)
+
+## Run mutation testing on the package (scope to source, not tests)
+mutmut run stistools/
+
+## View summary score
+mutmut results
+
+## See every surviving mutant
+mutmut results --all True
+
+## Inspect a specific surviving mutant (substitute the ID from results)
+mutmut show <mutant_id>
+
+## To start a fresh run and clear cached results
+rm -f .mutmut-cache
+mutmut run stistools/
+
+# Running documentation tests locally
+
+## Check documentation coverage (fail if below 75%)
+interrogate -vv stistools/ --fail-under 75
+
+## Check docstring style
+pydocstyle --count stistools/
