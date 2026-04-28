@@ -24,37 +24,42 @@ python -m pytest --cov=stistools --cov-branch --cov-report=html --cov-report=ter
 # First-time setup
 pip install -e ".[test]"
 
-# To run mutating tests on a file, edit the [tool.mutmut] section of pyproject.toml:
-[tool.mutmut]
-paths_to_mutate = ["stistools/<file being tested>"]
-tests_dir = ["tests_sdet/<test file>"]
+# If you get a permissions error when running mutmut, fix it first:
+chmod -R u+w tests/ tests_sdet/
+rm -rf .mutmut-cache mutants/
+
+# To run mutation tests on a specific file, edit the [tool.mutmut] section of pyproject.toml:
+toml[tool.mutmut]
+paths_to_mutate = ["stistools/<file_being_tested.py>"]
+tests_dir = ["tests_sdet"]
 also_copy = ["tests_sdet"]
-runner = "python -m pytest -o addopts= -x -q tests_sdet/<test file>"
+runner = "python -m pytest -o addopts= -x -q tests_sdet/<test_file.py>"
 do_not_mutate = ["stistools/version.py", "stistools/__init__.py"]
 debug = true
-# And then run:
-mutmut run
-# If this does not work, you may need to create a new file named setup.sfg with the following:
+# If pyproject.toml config is not picked up, create a setup.cfg file instead:
 [mutmut]
-paths_to_mutate=stistools/<file being tested>
-tests_dir=tests_sdet
-also_copy=tests_sdet
-runner=python -m pytest -o addopts= -x -q tests_sdet/<test file>
-do_not_mutate=stistools/version.py,stistools/__init__.py
-debug=true
+paths_to_mutate = stistools/<file_being_tested.py>
+tests_dir = tests_sdet
+also_copy = tests_sdet
+runner = python -m pytest -o addopts= -x -q tests_sdet/<test_file.py>
+do_not_mutate = stistools/version.py,stistools/__init__.py
+debug = true
+
+# Then run:
+bashmutmut run
 
 # View summary score
 mutmut results
 
-# See every surviving mutant
+# See all surviving mutants
 mutmut results --all True
 
-# Inspect a specific surviving mutant (substitute the ID from results)
+# Inspect a specific surviving mutant
 mutmut show <mutant_id>
 
-# To start a fresh run and clear cached results
+# Start a completely fresh run
 rm -f .mutmut-cache
-mutmut run stistools/
+mutmut run
 ```
 
 ### Running Documentation tests locally
